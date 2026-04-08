@@ -1,0 +1,31 @@
+[workspace]
+name = "pg-helper"
+version = "0.1.0"
+description = "Cross-platform PostgreSQL management CLI for pixi-based projects"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64"]
+
+[package]
+name = "pg-helper"
+version = "0.1.0"
+
+[build-system]
+build-backend = { name = "pixi-build-python", version = ">=0.1.0" }
+channels = ["conda-forge"]
+
+[host-dependencies]
+hatchling = ">=1.25.0"
+
+[run-dependencies]
+python = ">=3.13"
+
+[dependencies]
+python = ">=3.13"
+postgresql = ">=16"
+
+[tasks]
+pg-start = "pg-helper start"
+pg-stop = "pg-helper stop"
+pg-status = "pg-helper status"
+pg-shell = "pg-helper shell"
+pg-destroy = "pg-helper destroy"
