@@ -23,6 +23,6 @@ jobs:
 
       - name: Upload to prefix.dev
         run: |
-          pixi upload \
-            -- --channel thath \
+          pixi upload prefix \
+            --channel thath \
             ./*.conda
