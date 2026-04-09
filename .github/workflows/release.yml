@@ -22,6 +22,8 @@ jobs:
         run: pixi build
 
       - name: Upload to prefix.dev
+        env:
+          PREFIX_API_KEY: ${{ secrets.PREFIX_API_KEY }}
         run: |
           pixi upload prefix \
             --channel thath \
