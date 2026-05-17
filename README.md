@@ -10,7 +10,7 @@ With pip:
 pip install git+https://github.com/travishathaway/pg-helper.git@main
 ```
 
-With pixi
+With pixi (make sure you're using `gis-forge` and `conda-forge` channels):
 
 ```
 pixi add pg-helper
@@ -47,10 +47,14 @@ pg-helper destroy --force
 pg-helper --port 54321 start
 
 # Use a custom data directory
-pg-helper start --data-dir /vol/postgres/
+pg-helper --data-dir pgdata start
 
 # Combine both
-pg-helper --port 54321 start --data-dir /vol/postgres/
+pg-helper --port 54321 --data-dir pgdata start 
+
+# Initialize PostgreSQL to use a password
+# (you will be prompted to enter a password)
+pg-helper --port 54321 --data-dir pgdata start --password
 ```
 
 **Environment variables:**
@@ -73,6 +77,7 @@ cluster = PostgresCluster(
     data_dir=Path(".pgdata"),
     port=65432,
     user="postgres",
+    with_password=False
 )
 
 # Initialize, start, and create databases (idempotent)

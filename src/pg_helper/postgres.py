@@ -8,6 +8,7 @@ database operations, and cleanup.
 
 import os
 import platform
+import re
 import shutil
 import subprocess
 import time
@@ -92,6 +93,11 @@ class PgDataManager:
         """Get path to PostgreSQL PID file."""
         return self._data_dir / "postmaster.pid"
 
+    @property
+    def pg_hba_conf(self) -> Path:
+        """Get path to pg_hba.conf."""
+        return self._data_dir / "pg_hba.conf"
+
     def exists(self) -> bool:
         """Check if data directory exists."""
         return self._data_dir.exists() and self._data_dir.is_dir()
@@ -135,7 +141,7 @@ class PgDataManager:
 class PostgresManager:
     """Core PostgreSQL operations using subprocess."""
 
-    def __init__(self, data_mgr: PgDataManager, port: int, user: str = "postgres"):
+    def __init__(self, data_mgr: PgDataManager, port: int, user: str = "postgres", with_password: bool = False):
         """
         Initialize PostgreSQL manager.
 
@@ -147,6 +153,7 @@ class PostgresManager:
         self.data_mgr = data_mgr
         self.port = port
         self.user = user
+        self.with_password = with_password
 
     def _run_command(
         self, cmd: list[str], capture_output: bool = True, check: bool = True, timeout: int = 30
@@ -190,6 +197,7 @@ class PostgresManager:
             RuntimeError: If initialization fails
         """
         initdb_cmd = Platform.find_pg_command("initdb")
+        with_password = "--pwprompt" if self.with_password else None
 
         cmd = [
             initdb_cmd,
@@ -201,7 +209,31 @@ class PostgresManager:
             "--encoding=UTF8",
         ]
 
+        if with_password is not None:
+            cmd.append(with_password)
+
         self._run_command(cmd)
+
+    def configure_password_auth(self, auth_method: str = "scram-sha-256") -> None:
+        """
+        Update pg_hba.conf to require password authentication instead of trust.
+
+        Args:
+            auth_method: PostgreSQL auth method to use (default: scram-sha-256)
+
+        Raises
+        ------
+            FileNotFoundError: If pg_hba.conf does not exist
+        """
+        pg_hba = self.data_mgr.pg_hba_conf
+        content = pg_hba.read_text()
+        new_lines = []
+        for line in content.splitlines(keepends=True):
+            stripped = line.strip()
+            if not stripped.startswith("#") and stripped:
+                line = re.sub(r"\btrust\b", auth_method, line)
+            new_lines.append(line)
+        pg_hba.write_text("".join(new_lines))
 
     def start(self) -> None:
         """
@@ -411,7 +443,7 @@ class PostgresManager:
 class PostgresCluster:
     """High-level PostgreSQL cluster management interface."""
 
-    def __init__(self, data_dir: Path, port: int, user: str = "postgres"):
+    def __init__(self, data_dir: Path, port: int, user: str = "postgres", with_password: bool = False):
         """
         Initialize PostgreSQL cluster manager.
 
@@ -421,7 +453,7 @@ class PostgresCluster:
             user: PostgreSQL user name (default: postgres)
         """
         self.data_mgr = PgDataManager(data_dir)
-        self.pg_mgr = PostgresManager(self.data_mgr, port, user)
+        self.pg_mgr = PostgresManager(self.data_mgr, port, user, with_password)
         self.port = port
         self.user = user
 

@@ -71,7 +71,7 @@ def cmd_start(args: argparse.Namespace) -> int:
         Exit code (0 for success, non-zero for error)
     """
     data_dir = Path(args.data_dir)
-    cluster = PostgresCluster(data_dir, args.port, DEFAULT_USER)
+    cluster = PostgresCluster(data_dir, args.port, DEFAULT_USER, args.password)
 
     # 1. Check if already running
     if cluster.is_running():
@@ -83,6 +83,9 @@ def cmd_start(args: argparse.Namespace) -> int:
     if not cluster.data_mgr.exists():
         print_info("Initializing PostgreSQL cluster...")
         cluster.pg_mgr.initialize()
+        if args.password:
+            cluster.pg_mgr.configure_password_auth()
+            print_success("Password authentication configured in pg_hba.conf")
         print_success(f"PostgreSQL cluster initialized at {cluster.data_mgr.data_dir}")
 
     # 3. Start server
@@ -335,6 +338,7 @@ Environment variables:
     parser.add_argument(
         "--port", type=int, default=DEFAULT_PORT, help=f"PostgreSQL port (default: {DEFAULT_PORT})"
     )
+
     parser.add_argument(
         "--data-dir",
         type=str,
@@ -345,7 +349,11 @@ Environment variables:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # start command
-    subparsers.add_parser("start", help="Initialize (if needed) and start PostgreSQL")
+    start_parser = subparsers.add_parser("start", help="Initialize (if needed) and start PostgreSQL")
+
+    start_parser.add_argument(
+        "--password", action="store_true", help=f"Prompt for a password to use password (default does not use a password)"
+    )
 
     # stop command
     subparsers.add_parser("stop", help="Stop PostgreSQL gracefully (preserve data)")

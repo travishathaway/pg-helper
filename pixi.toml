@@ -20,6 +20,9 @@ hatchling = ">=1.25.0"
 python = ">=3.10"
 postgresql = ">=16"
 
+[pypi-dependencies]
+pg-helper = { path = ".", editable = true }
+
 [tasks]
 pg-start = "pg-helper start"
 pg-stop = "pg-helper stop"
