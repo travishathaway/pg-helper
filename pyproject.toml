@@ -2,7 +2,7 @@
 name = "pg-helper"
 version = "0.1.0"
 description = "Cross-platform PostgreSQL management CLI for pixi-based projects"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = []
 
 [project.scripts]
